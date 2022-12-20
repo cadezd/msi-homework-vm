@@ -26,7 +26,8 @@ Vagrant.configure("2") do |config|
   # accessing "localhost:8080" will access port 8082 on the guest machine.
   # NOTE: This will enable public access to the opened port
   config.vm.network :private_network, ip: "192.168.27.100"
-  config.vm.network "forwarded_port", guest: 8082, host: 8080
+  config.vm.network "forwarded_port", guest: 8082, host: 8080 # API
+  config.vm.network "forwarded_port", guest: 80, host: 9090 # WEB APP
   
 
 
@@ -68,7 +69,7 @@ Vagrant.configure("2") do |config|
     source /etc/profile.d/maven.sh
   
 
-    # REDIS 
+    # INSTALACIJA REDISA 
     apt install -y lsb-release
     curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
     echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
@@ -77,11 +78,19 @@ Vagrant.configure("2") do |config|
     sudo service redis-server start
     redis-cli config set appendonly yes
     redis-cli config set save ""
+
+
+    # INSTALACIJA NODE-A IN NGINX-A
+    curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+    apt-get install -y nodejs   
+    apt-get install -y nginx
+
     
     # KLONIRANJE REPOTOV IZ GITHUBA (API IN WEB SCRAPER)
     cd /usr/local/bin
     git clone https://github.com/David-api/foodTinderApi.git
     git clone https://github.com/David-api/foodTinderWebScraper.git
+    git clone https://github.com/David-api/foodTinderFrontend.git
     
     # NAREDIMO SERVICE ZA API (IN POZENEMO)
     cd /usr/local/bin/foodTinderApi
@@ -114,8 +123,35 @@ Vagrant.configure("2") do |config|
     echo "[Install]" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
     echo "WantedBy=multi-user.target" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
 
+
     systemctl daemon-reload
     systemctl enable foodTinderApiWebScraper.service
     systemctl start foodTinderApiWebScraper.service
+
+
+    # NAREDIMO SERVICE ZA FRONTEND (IN POZENEMO)
+    cd /usr/local/bin/foodTinderFrontend
+    npm install
+    npm run build
+
+    rm index.nginx-debian.html
+    rm /etc/nginx/sites-enabled/default
+    mv /usr/local/bin/foodTinderFrontend/build/* /var/www/html/
+
+    touch /etc/nginx/conf.d/react.conf
+    echo "server{"  | tee -a /etc/nginx/conf.d/react.conf
+    echo "  listen 80;" | tee -a /etc/nginx/conf.d/react.conf
+    echo "  listen [::]:80;" | tee -a /etc/nginx/conf.d/react.conf
+    echo "  root /var/www/html;" | tee -a /etc/nginx/conf.d/react.conf
+    echo "  location / {" | tee -a /etc/nginx/conf.d/react.conf
+    echo "    try_files \\\$uri /index.html;" | tee -a /etc/nginx/conf.d/react.conf
+    echo "  }" | tee -a /etc/nginx/conf.d/react.conf
+    echo "}" | tee -a /etc/nginx/conf.d/react.conf
+
+    fuser -k 80/tcp
+    service nginx start
+    service nginx reload
+    service nginx start
+
   SHELL
-end
+end    
