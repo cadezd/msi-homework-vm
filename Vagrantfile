@@ -11,9 +11,9 @@ Vagrant.configure("2") do |config|
 
   # HARDWARE
   config.vm.provider "virtualbox" do |vb|
-    # 2 VIRTUALNA CPU-JA
+    # 4 VIRTUALNI CPU-JI
     vb.cpus = 4 
-    # 2 GB RAMA
+    # 4 GB RAMA
     vb.memory = "4096"
   end
 
@@ -29,8 +29,6 @@ Vagrant.configure("2") do |config|
   config.vm.network "forwarded_port", guest: 8082, host: 8080 # API
   config.vm.network "forwarded_port", guest: 80, host: 9090 # WEB APP
   
-
-
 
   # Share an additional folder to the guest VM. The first argument is
   # the path on the host to the actual folder. The second argument is
