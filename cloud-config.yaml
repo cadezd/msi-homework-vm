@@ -1,0 +1,113 @@
+#cloud-config
+runcmd:
+  # UPDATE
+  - sudo apt-get update
+  - sudo killall apt apt-get
+  - sudo rm /var/lib/apt/lists/lock
+  - sudo rm /var/cache/apt/archives/lock
+  - sudo rm /var/lib/dpkg/lock*
+  - sudo dpkg --configure -a
+
+  # INSTALACIJA RAZNIH DODATNIH PAKETOV
+  - sudo apt-get install -y net-tools
+
+  # INSTALCIJA PYTHONA, PIP-a IN OSTALIH DEPENDENCIJEV
+  - sudo apt-get install -y software-properties-common
+  - sudo add-apt-repository -y ppa:deadsnakes/ppa
+  - sudo apt-get install -y python3
+  - sudo apt-get install -y python3-pip
+  - sudo pip install beautifulsoup4
+
+  # INSTALACIJA JAVE IN MAVENA
+  - sudo apt-get install -y default-jdk
+  - sudo apt-get install -y maven
+  - sudo wget https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz -P /tmp
+  - sudo tar xf /tmp/apache-maven-*.tar.gz -C /opt
+  - sudo ln -s /opt/apache-maven-3.8.6 /opt/maven
+  - sudo touch /etc/profile.d/maven.sh
+  - sudo chmod +rwx /etc/profile.d/maven.sh
+  - sudo echo "export JAVA_HOME=/usr/lib/jvm/default-java" | tee -a /etc/profile.d/maven.sh
+  - sudo echo "export M2_HOME=/opt/maven" | tee -a /etc/profile.d/maven.sh
+  - sudo echo "export MAVEN_HOME=/opt/maven" | tee -a /etc/profile.d/maven.sh
+  - sudoecho "export PATH=${M2_HOME}/bin:${PATH}" | tee -a /etc/profile.d/maven.sh
+  - sudo source /etc/profile.d/maven.sh
+
+  # INSTALACIJA REDISA
+  - sudo apt install -y lsb-release
+  - sudo curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+  - sudo echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
+  - sudo apt-get update
+  - sudo apt-get install -y redis
+  - sudo service redis-server start
+  - sudo redis-cli config set appendonly yes
+  - sudo redis-cli config set save ""
+
+  # INSTALACIJA NODE-A IN NGINX-A
+  - sudo curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+  - sudo apt-get install -y nodejs
+  - sudo apt-get install -y nginx
+
+  # KLONIRANJE REPOTOV IZ GITHUBA (API IN WEB SCRAPER)
+  - cd /usr/local/bin
+  - sudo git clone https://github.com/David-api/foodTinderApi.git
+  - sudo git clone https://github.com/David-api/foodTinderWebScraper.git
+  - sudo git clone https://github.com/David-api/foodTinderFrontend.git
+
+  # NAREDIMO SERVICE ZA API (IN POZENEMO)
+  - cd /usr/local/bin/foodTinderApi
+  - sudo mvn compile
+  - sudo mvn clean package
+  - sudo touch /etc/systemd/system/foodTinderApiService.service
+  - sudo echo "[Unit]" | tee -a /etc/systemd/system/foodTinderApiService.service
+  - sudo echo "Description=foodTinderApiService" | tee -a /etc/systemd/system/foodTinderApiService.service
+  - sudo echo "After=network.target" | tee -a /etc/systemd/system/foodTinderApiService.service
+  - sudo echo "" | tee -a /etc/systemd/system/foodTinderApiService.service
+  - sudo echo "[Service]" | tee -a /etc/systemd/system/foodTinderApiService.service
+  - sudo echo "ExecStart=java -jar /usr/local/bin/foodTinderApi/target/alergenko-api-0.0.1-SNAPSHOT.jar" | tee -a /etc/systemd/system/foodTinderApiService.service
+  - sudo echo "" | tee -a /etc/systemd/system/foodTinderApiService.service
+  - sudo echo "[Install]" | tee -a /etc/systemd/system/foodTinderApiService.service
+  - sudo echo "WantedBy=multi-user.target" | tee -a /etc/systemd/system/foodTinderApiService.service
+
+  - sudo systemctl daemon-reload
+  - sudo systemctl enable foodTinderApiService.service
+  - sudo systemctl start foodTinderApiService.service
+
+  # NAREDIMO SERVICE ZA WEB-SCRAER (IN POZENEMO)
+  - sudo touch /etc/systemd/system/foodTinderApiWebScraper.service
+  - sudo echo "[Unit]" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
+  - sudo echo "Description=foodTinderWebScraperService" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
+  - sudo echo "After=network.target" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
+  - sudo echo "" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
+  - sudo echo "[Service]" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
+  - sudo echo "ExecStart=python3 /usr/local/bin/foodTinderWebScraper/Main.py" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
+  - sudo echo "" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
+  - sudo echo "[Install]" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
+  - sudo echo "WantedBy=multi-user.target" | tee -a /etc/systemd/system/foodTinderApiWebScraper.service
+
+  - sudo systemctl daemon-reload
+  - sudo systemctl enable foodTinderApiWebScraper.service
+  - sudo systemctl start foodTinderApiWebScraper.service
+
+  # NAREDIMO SERVICE ZA FRONTEND (IN POZENEMO)
+  - cd /usr/local/bin/foodTinderFrontend
+  - sudo npm install
+  - sudo npm run build
+
+  - sudo rm /var/www/html/index.nginx-debian.html
+  - sudo rm /etc/nginx/sites-enabled/default
+  - sudo mv /usr/local/bin/foodTinderFrontend/build/* /var/www/html/
+
+  - sudo touch /etc/nginx/conf.d/react.conf
+  - sudo echo "server{"  | tee -a /etc/nginx/conf.d/react.conf
+  - sudo echo "  listen 80;" | tee -a /etc/nginx/conf.d/react.conf
+  - sudo echo "  listen [::]:80;" | tee -a /etc/nginx/conf.d/react.conf
+  - sudo echo "  root /var/www/html;" | tee -a /etc/nginx/conf.d/react.conf
+  - sudo echo "  location / {" | tee -a /etc/nginx/conf.d/react.conf
+  - sudo echo "    try_files \$uri /index.html;" | tee -a /etc/nginx/conf.d/react.conf
+  - sudo echo "  }" | tee -a /etc/nginx/conf.d/react.conf
+  - sudo echo "}" | tee -a /etc/nginx/conf.d/react.conf
+
+  - sudo fuser -k 80/tcp
+  - sudo service nginx start
+  - sudo service nginx reload
+  - sudo service nginx start
