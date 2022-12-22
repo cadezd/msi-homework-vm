@@ -40,6 +40,7 @@ Vagrant.configure("2") do |config|
   # INSTALACIJA VSEGA POTREBNEGA
   config.vm.provision "shell", inline: <<-SHELL
     # UPDATE
+    echo "nameserver 8.8.8.8" | tee /etc/resolv.conf > /dev/null
     apt-get update
 
     # INSTALACIJA RAZNIH DODATNIH PAKETOV
