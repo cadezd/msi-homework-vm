@@ -88,7 +88,13 @@ Vagrant.configure("2") do |config|
     # KLONIRANJE REPOTOV IZ GITHUBA (API IN WEB SCRAPER)
     cd /usr/local/bin
     git clone https://github.com/David-api/foodTinderApi.git
+    cd /usr/local/bin/foodTinderApi
+    git reset --hard f19ee2d77a813761b057269728f484ffe4fa5158
+    cd ..
     git clone https://github.com/David-api/foodTinderWebScraper.git
+    cd /usr/local/bin/foodTinderWebScraper
+    git reset --hard 99511bfaa8162f4dd01994e3b8e4cab2fa7ef1c1
+    cd ..
     git clone https://github.com/David-api/foodTinderFrontend.git
     
     # NAREDIMO SERVICE ZA API (IN POZENEMO)
@@ -133,7 +139,7 @@ Vagrant.configure("2") do |config|
     npm install
     npm run build
 
-    rm index.nginx-debian.html
+    rm /var/www/html/index.nginx-debian.html
     rm /etc/nginx/sites-enabled/default
     mv /usr/local/bin/foodTinderFrontend/build/* /var/www/html/
 

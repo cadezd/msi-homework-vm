@@ -50,7 +50,13 @@ runcmd:
   # KLONIRANJE REPOTOV IZ GITHUBA (API IN WEB SCRAPER)
   - cd /usr/local/bin
   - sudo git clone https://github.com/David-api/foodTinderApi.git
+  - cd /usr/local/bin/foodTinderApi
+  - sudo git reset --hard f19ee2d77a813761b057269728f484ffe4fa5158
+  - cd ..
   - sudo git clone https://github.com/David-api/foodTinderWebScraper.git
+  - cd /usr/local/bin/foodTinderWebScraper
+  - sudo git reset --hard 99511bfaa8162f4dd01994e3b8e4cab2fa7ef1c1
+  - cd ..
   - sudo git clone https://github.com/David-api/foodTinderFrontend.git
 
   # NAREDIMO SERVICE ZA API (IN POZENEMO)
