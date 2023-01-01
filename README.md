@@ -125,7 +125,13 @@ V ```/usr/local/bin``` sem kloiral vse svoje repote iz GitHuba-a (API, Web scrap
    # KLONIRANJE REPOTOV IZ GITHUBA (API IN WEB SCRAPER)
    cd /usr/local/bin
    git clone https://github.com/David-api/foodTinderApi.git
+   cd /usr/local/bin/foodTinderApi
+   git reset --hard f19ee2d77a813761b057269728f484ffe4fa5158
+   cd ..
    git clone https://github.com/David-api/foodTinderWebScraper.git
+   cd /usr/local/bin/foodTinderWebScraper
+   git reset --hard 99511bfaa8162f4dd01994e3b8e4cab2fa7ef1c1
+   cd ..
    git clone https://github.com/David-api/foodTinderFrontend.git
 ```
 
@@ -250,7 +256,7 @@ in datoteko ekstrahirati v mapo ```Downloads```. Zatem moramo spremeniti driver 
 
 Da kreiramo virtualko poženemo spodnji ukaz:
 ```
-multipass launch -vvvv -n "msi-homework" -c 4 -d 40G -m 4G  --cloud-init cloud-config.yaml --timeout 1200
+multipass launch -vvvv -n "msi-homework" -c 4 -d 40G -m 4G  --cloud-init cloud-config.yaml --timeout 1500
 ```
 
 Nazadnje še naredimo port forwrding s spodnjima ukazoma:
