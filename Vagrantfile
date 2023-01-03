@@ -96,6 +96,8 @@ Vagrant.configure("2") do |config|
     git reset --hard 99511bfaa8162f4dd01994e3b8e4cab2fa7ef1c1
     cd ..
     git clone https://github.com/David-api/foodTinderFrontend.git
+    cd /usr/local/bin/foodTinderWebScraper
+    git reset --hard 2c97a0f3d7310eb3e64b14862544c3b2d3fc798f
     
     # NAREDIMO SERVICE ZA API (IN POZENEMO)
     cd /usr/local/bin/foodTinderApi

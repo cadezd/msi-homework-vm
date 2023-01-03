@@ -6,31 +6,34 @@ FoodTinder je spletna aplikacija, ki uporabniku ti naključno izbere 5 izdelkov 
 vseč ali pa v levo, če mu izdelek ni všeč.
 
 Aplikacija je sestavljena iz naslednjih servisov:
- 1. Redis "podatkovna baza"
- 2. API
- 3. Web scraper
- 4. Fontend
- 
- ## Opis problema
- 
+
+1.  Redis "podatkovna baza"
+2.  API
+3.  Web scraper
+4.  Fontend
+
+## Opis problema
+
 Postavljanje virtualke, za takšno spletno apliakcijo je na roke zelo zamudno, zato sem se odločil, da bom ta zamudni postopek avtomatiziral na dva načina in sicer:
- 1. z Vagrantom
- 2. z cloud-init in Multipassom
- 
+
+1.  z Vagrantom
+2.  z cloud-init in Multipassom
+
 ## Rešitev 1 ~ Vagrant
- 
+
 ### Potrebna orodja
 
 Orodja, ki sem jih uporabil za izvedno prve rešitve:
+
 - orodje **Vagrant**
 - hipervizor **VirtualBox**
 
 ### Konfiguracija virtualke
 
-Za operacijski sistem sem izbral ```ubuntu/focal64```, dodelil sem ji tudi ```4 virtualne cpu-je``` in ```4 GB RAM-a```
-Ker je nameščanje vseh paketov vzame veliko časa, sem bil tudi primoran povečati timeout na 500 sekund. Nazadnje sem 
-virtualki dodeli ip ```192.168.27.100``` in naredil port-forwarding na dva porta na virtualki. Iz porta ```8080``` (host) na port ```8082``` (guest) kjer bo tekel API
-in iz porta ```9090``` (host) na port ```80``` (guest) kjer bo nginx serviral spletno aplikacijo.
+Za operacijski sistem sem izbral `ubuntu/focal64`, dodelil sem ji tudi `4 virtualne cpu-je` in `4 GB RAM-a`
+Ker je nameščanje vseh paketov vzame veliko časa, sem bil tudi primoran povečati timeout na 500 sekund. Nazadnje sem
+virtualki dodeli ip `192.168.27.100` in naredil port-forwarding na dva porta na virtualki. Iz porta `8080` (host) na port `8082` (guest) kjer bo tekel API
+in iz porta `9090` (host) na port `80` (guest) kjer bo nginx serviral spletno aplikacijo.
 
 ```
   # OPERACIJSKI SISTEM
@@ -39,13 +42,13 @@ in iz porta ```9090``` (host) na port ```80``` (guest) kjer bo nginx serviral sp
   # HARDWARE
   config.vm.provider "virtualbox" do |vb|
     # 4 VIRTUALNI CPU-JI
-    vb.cpus = 4 
+    vb.cpus = 4
     # 4 GB RAMA
     vb.memory = "4096"
   end
 
   config.vm.boot_timeout = 500
-  
+
   # POVEZAVA DO INTERNETA
   config.vm.network :private_network, ip: "192.168.27.100"
   config.vm.network "forwarded_port", guest: 8082, host: 8080 # API
@@ -54,19 +57,19 @@ in iz porta ```9090``` (host) na port ```80``` (guest) kjer bo nginx serviral sp
 
 ### Namesčanje paketov
 
-Najprej sem spremenil IP naslov DNS serverja, ker v nasprotnem primeru sem dobil napake pri posodobitvi (```Could not resolve 'archive.ubuntu.com'```).
-Nato posodobim virtualko in namestim ```net-tools``` paket zaradi testiranja.
+Najprej sem spremenil IP naslov DNS serverja, ker v nasprotnem primeru sem dobil napake pri posodobitvi (`Could not resolve 'archive.ubuntu.com'`).
+Nato posodobim virtualko in namestim `net-tools` paket zaradi testiranja.
 
-``` 
+```
    # UPDATE
    echo "nameserver 8.8.8.8" | tee /etc/resolv.conf > /dev/null
    apt-get update
-   
+
    # INSTALACIJA RAZNIH DODATNIH PAKETOV
    apt-get install -y net-tools
 ```
 
-Web scraper sem napisal v programskem jeziku python, zato sem moral najprej namestiti python, pip, in vse 
+Web scraper sem napisal v programskem jeziku python, zato sem moral najprej namestiti python, pip, in vse
 potrebne dependency-je za izvajanje Web scraperja.
 
 ```
@@ -96,10 +99,10 @@ Ker sem API, napisal v Springboot-u, ki uporablja Javo in Maven, sem tudi to nam
    source /etc/profile.d/maven.sh
 ```
 
-Potem sem inštaliral REDIS, ki ga uporabljam kot primarno podatkovno bazo, zato sem ga nastavil v ```appendonly``` mode.
+Potem sem inštaliral REDIS, ki ga uporabljam kot primarno podatkovno bazo, zato sem ga nastavil v `appendonly` mode.
 
 ```
-   # INSTALACIJA REDISA 
+   # INSTALACIJA REDISA
    apt install -y lsb-release
    curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
    echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
@@ -110,18 +113,18 @@ Potem sem inštaliral REDIS, ki ga uporabljam kot primarno podatkovno bazo, zato
     redis-cli config set save ""
 ```
 
-Zatem sem inštaliral še ```node-js``` in ```nginx```, ki ju bom v nadaljevanju uporabil za frontend apliacije.
+Zatem sem inštaliral še `node-js` in `nginx`, ki ju bom v nadaljevanju uporabil za frontend apliacije.
 
-``` 
+```
    # INSTALACIJA NODE-A IN NGINX-A
    curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-   apt-get install -y nodejs   
+   apt-get install -y nodejs
    apt-get install -y nginx
 ```
 
-V ```/usr/local/bin``` sem kloiral vse svoje repote iz GitHuba-a (API, Web scraper in frontend).
+V `/usr/local/bin` sem kloiral vse svoje repote iz GitHuba-a (API, Web scraper in frontend).
 
-```   
+```
    # KLONIRANJE REPOTOV IZ GITHUBA (API IN WEB SCRAPER)
    cd /usr/local/bin
    git clone https://github.com/David-api/foodTinderApi.git
@@ -133,9 +136,11 @@ V ```/usr/local/bin``` sem kloiral vse svoje repote iz GitHuba-a (API, Web scrap
    git reset --hard 99511bfaa8162f4dd01994e3b8e4cab2fa7ef1c1
    cd ..
    git clone https://github.com/David-api/foodTinderFrontend.git
+   cd /usr/local/bin/foodTinderWebScraper
+   git reset --hard 2c97a0f3d7310eb3e64b14862544c3b2d3fc798f
 ```
 
-Nato sem naredi ```.service``` skripte, ki zaženejo API in Web scraper ko service (proces v ozadju) in ju pognal.
+Nato sem naredi `.service` skripte, ki zaženejo API in Web scraper ko service (proces v ozadju) in ju pognal.
 
 ```
    # NAREDIMO SERVICE ZA API (IN POZENEMO)
@@ -175,10 +180,10 @@ Nato sem naredi ```.service``` skripte, ki zaženejo API in Web scraper ko servi
    systemctl start foodTinderApiWebScraper.service
 ```
 
-Nazadnje sem še "zbuildal" react aplikacijo, premaknil vse potrebne datoteke v ```/var/www/html``` 
+Nazadnje sem še "zbuildal" react aplikacijo, premaknil vse potrebne datoteke v `/var/www/html`
 in konfiguriral nginx, tako da je poslušal na portu 80.
 
-``` 
+```
    # NAREDIMO SERVICE ZA FRONTEND (IN POZENEMO)
    cd /usr/local/bin/foodTinderFrontend
    npm install
@@ -214,28 +219,28 @@ vagrant up
 
 ### Rezultat
 
-Če v spletni brskalnik vpišemo ```http://localhost:8080/product/get``` dobimo primer API odgovora s petimi naključnimi izdelki.
+Če v spletni brskalnik vpišemo `http://localhost:8080/product/get` dobimo primer API odgovora s petimi naključnimi izdelki.
 
 ![image](https://user-images.githubusercontent.com/58308216/209155756-5a0e821a-ebdf-48d1-94c9-5200d3a0fb9d.png)
 
-Če v spletni brskalnik vpišemo ```http://localhost:9090/``` se nam odpre spletna aplikacija FoodTinder.
+Če v spletni brskalnik vpišemo `http://localhost:9090/` se nam odpre spletna aplikacija FoodTinder.
 
 ![image](https://user-images.githubusercontent.com/58308216/209155896-715f9bed-6f70-4f91-9a5e-849a1466b820.png)
-
 
 ## Rešitev 2 ~ cloud-init + Multipass
 
 V tem delu bom samo opisal razlike med rešitvijo 1 in rešitvijo 2
- 
+
 ### Potrebna orodja
 
 Orodja, ki sem jih uporabil za izvedno prve rešitve:
+
 - orodje **cloud-init + Multipass**
 - hipervizor **VirtualBox**
 
 ### Nameščanje paketov
 
-Vsi koraki so identični, razen posodabljanje virtualke, ker sem moral zbrisati ```chache```, da so se potem vsi paketi normalno namestili. 
+Vsi koraki so identični, razen posodabljanje virtualke, ker sem moral zbrisati `chache`, da so se potem vsi paketi normalno namestili.
 
 ```
 #cloud-config
@@ -251,18 +256,21 @@ runcmd:
 
 ### Poganjanje skripte
 
-Da poženemo skripto moramo najprej terminal zagnati kot administrator. Nato moramo naložiti ```PsTools``` iz [tega naslova](https://learn.microsoft.com/en-us/sysinternals/downloads/pstools)
-in datoteko ekstrahirati v mapo ```Downloads```. Zatem moramo spremeniti driver na virtual box z ukazom ```multipass set local.driver=virtualbox``` 
+Da poženemo skripto moramo najprej terminal zagnati kot administrator. Nato moramo naložiti `PsTools` iz [tega naslova](https://learn.microsoft.com/en-us/sysinternals/downloads/pstools)
+in datoteko ekstrahirati v mapo `Downloads`. Zatem moramo spremeniti driver na virtual box z ukazom `multipass set local.driver=virtualbox`
 
 Da kreiramo virtualko poženemo spodnji ukaz:
+
 ```
 multipass launch -vvvv -n "msi-homework" -c 4 -d 40G -m 4G  --cloud-init cloud-config.yaml --timeout 1500
 ```
 
 Nazadnje še naredimo port forwrding s spodnjima ukazoma:
+
 ```
 & $env:USERPROFILE\Downloads\PSTools\PsExec.exe -s $env:VBOX_MSI_INSTALL_PATH\VBoxManage.exe controlvm "msi-homework" natpf1 "myservice1,tcp,,8080,,8082"
 ```
+
 ```
  & $env:USERPROFILE\Downloads\PSTools\PsExec.exe -s $env:VBOX_MSI_INSTALL_PATH\VBoxManage.exe controlvm "msi-homework" natpf1 "myservice2,tcp,,9090,,80"
 ```
